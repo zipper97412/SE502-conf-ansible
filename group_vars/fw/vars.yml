@@ -1,0 +1,11 @@
+interfaces_ether_interfaces:
+#ceci est un exemple
+  - device: nomdelinterface
+    bootproto: static
+    address: 192.168.1.150
+    netmask: 255.255.255.0
+    gateway: 192.168.1.1
+    route:
+     - network: 192.168.200.0
+       netmask: 255.255.255.0
+       gateway: 192.168.1.1
