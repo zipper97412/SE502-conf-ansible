@@ -1,3 +1,6 @@
+
+ansible_user: root
+
 interfaces_ether_interfaces:
 #ceci est un exemple
   - device: nomdelinterface
