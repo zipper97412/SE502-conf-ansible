@@ -1,9 +1,8 @@
 ---
 
 - hosts: fw
-  tasks:
-  - name: say hi
-    tags: foo
-    shell: echo "hi..."
-#  roles:
-#    - ansible-role-interfaces
+  roles:
+    - role: MichaelRigart.interfaces
+      tags: [ 'interface' ]
+    - role: mikegleasonjr.firewall
+      tags: [ 'firewall' ]

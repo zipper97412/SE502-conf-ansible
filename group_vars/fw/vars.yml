@@ -1,14 +1,21 @@
 
 ansible_user: root
+ansible_host: ens18.address
 
 interfaces_ether_interfaces:
 #ceci est un exemple
-  - device: nomdelinterface
+  - device: ens18
     bootproto: static
-    address: 192.168.1.150
+    address: "{{ ens18.address }}"
     netmask: 255.255.255.0
-    gateway: 192.168.1.1
-    route:
-     - network: 192.168.200.0
-       netmask: 255.255.255.0
-       gateway: 192.168.1.1
+    gateway: "{{ ens18.gateway }}"
+    dnsnameservers: 192.168.130.202 212.27.40.240 212.27.40.241
+    dnssearch: b120.esisar.fr
+
+  - device: ens19
+    bootproto: static
+    address: "{{ ens19.address }}"
+    netmask: 255.255.255.0
+    gateway: "{{ ens19.gateway }}"
+
+firewall_v4_group_rules: {}

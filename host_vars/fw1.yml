@@ -1,0 +1,11 @@
+
+ens18:
+  address: 172.16.5.2
+  gateway: 172.16.5.1
+
+ens19:
+  address: 192.168.42.42
+  gateway: 192.168.42.1
+
+
+firewall_v4_host_rules: {}

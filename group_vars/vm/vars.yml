@@ -1,1 +1,3 @@
 ansible_user: root
+
+firewall_v4_group_rules: {}
