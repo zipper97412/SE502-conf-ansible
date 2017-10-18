@@ -1,3 +1,6 @@
 ansible_user: root
 
+controle_interface:
+  name: eth0
+
 firewall_v4_group_rules: {}

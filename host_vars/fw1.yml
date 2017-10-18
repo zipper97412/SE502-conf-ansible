@@ -1,5 +1,7 @@
 
-ens18:
+
+controle_interface:
+  name: ens18
   address: 172.16.5.2
   gateway: 172.16.5.1
 

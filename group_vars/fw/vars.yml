@@ -1,14 +1,15 @@
 
 ansible_user: root
-ansible_host: ens18.address
+ansible_host: "{{ controle_interface.address }}"
+
 
 interfaces_ether_interfaces:
 #ceci est un exemple
-  - device: ens18
+  - device: "{{ controle_interface.name }}"
     bootproto: static
-    address: "{{ ens18.address }}"
+    address: "{{ controle_interface.address }}"
     netmask: 255.255.255.0
-    gateway: "{{ ens18.gateway }}"
+    gateway: "{{ controle_interface.gateway }}"
     dnsnameservers: 192.168.130.202 212.27.40.240 212.27.40.241
     dnssearch: b120.esisar.fr
 

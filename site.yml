@@ -1,2 +1,3 @@
 ---
 - import_playbook: plays/firewalls.yml
+- import_playbook: plays/containers.yml
