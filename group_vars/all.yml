@@ -14,14 +14,12 @@ firewall_v4_default_rules:
   100 allow established related:
     - -A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
     - -A OUTPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
-  110 DNS In/Out:
+  110 DNS Out:
     - -t filter -A OUTPUT -p tcp --dport 53 -j ACCEPT
     - -t filter -A OUTPUT -p udp --dport 53 -j ACCEPT
-    - -t filter -A INPUT -p tcp --dport 53 -j ACCEPT
-    - -t filter -A INPUT -p udp --dport 53 -j ACCEPT
   120  HTTP OUT:
     - -t filter -A OUTPUT -p tcp --dport 80 -j ACCEPT
     - -t filter -A OUTPUT -p tcp --dport 443 -j ACCEPT
   200 allow ssh on control interface :
-    - -t filter -i {{ controle_interface.name }} -A INPUT -p tcp --dport 22 -j ACCEPT
+    - -t filter -i {{ interfaces.controle.name }} -A INPUT -p tcp --dport 22 -j ACCEPT
     - -t filter -A OUTPUT -p TCP --sport 22 -j ACCEPT

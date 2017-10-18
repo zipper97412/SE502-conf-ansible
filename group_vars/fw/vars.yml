@@ -1,22 +1,80 @@
 
 ansible_user: root
-ansible_host: "{{ controle_interface.address }}"
-
+ansible_host: "{{ interfaces.controle.address }}"
 
 interfaces_ether_interfaces:
-#ceci est un exemple
-  - device: "{{ controle_interface.name }}"
+  - device: "{{ interfaces.controle.name }}"
     bootproto: static
-    address: "{{ controle_interface.address }}"
+    address: "{{ interfaces.controle.address }}"
     netmask: 255.255.255.0
-    gateway: "{{ controle_interface.gateway }}"
+    gateway: "{{ interfaces.controle.gateway }}"
     dnsnameservers: 192.168.130.202 212.27.40.240 212.27.40.241
     dnssearch: b120.esisar.fr
-
-  - device: ens19
+  - device: "{{ interfaces.extern.name }}"
     bootproto: static
-    address: "{{ ens19.address }}"
+    address: "{{ interfaces.extern.address }}"
     netmask: 255.255.255.0
-    gateway: "{{ ens19.gateway }}"
+  - device: "{{ interfaces.dmz_vpn_ext.name }}"
+    bootproto: static
+    address: "{{ interfaces.dmz_vpn_ext.address }}"
+    netmask: 255.255.255.0
+  - device: "{{ interfaces.fw_link.name }}"
+    bootproto: static
+    address: "{{ interfaces.fw_link.address }}"
+    netmask: 255.255.255.0
+  - device: "{{ interfaces.dmz_vpn_int.name }}"
+    bootproto: static
+    address: "{{ interfaces.dmz_vpn_int.address }}"
+    netmask: 255.255.255.0
 
-firewall_v4_group_rules: {}
+firewall_v4_group_rules:
+  500 keepalived:
+    - -p vrrp -A INPUT -j ACCEPT
+    - -p vrrp -A OUTPUT -j ACCEPT
+
+
+vrrp_instances:
+  - name: extern
+    interface: "{{ interfaces.fw_link.name }}"
+    state: BACKUP
+    virtual_router_id: 61
+    priority: "{{ keepalive_prio }}"
+    advert_int: 1
+    authentication:
+        auth_type: PASS
+        auth_pass: zzzz
+    lvs_sync_daemon_interface: "{{ interfaces.fw_link.name }}"
+    unicast_src_ip: "{{ interfaces.fw_link.address }}"
+    unicast_peer: "{{ keepalive_peer }}"
+    virtual_ipaddress:
+        - address: 192.168.200.59/24
+          interface: "{{ interfaces.extern.name }}"
+    nopreempt: true
+    garp_master_delay: 1
+
+  - name: dmz_vpn_ext
+    interface: "{{ interfaces.fw_link.name }}"
+    state: BACKUP
+    virtual_router_id: 62
+    priority: "{{ keepalive_prio }}"
+    advert_int: 1
+    authentication:
+        auth_type: PASS
+        auth_pass: zzzz
+    lvs_sync_daemon_interface: "{{ interfaces.fw_link.name }}"
+    unicast_src_ip: "{{ interfaces.fw_link.address }}"
+    unicast_peer: "{{ keepalive_peer }}"
+    virtual_ipaddress:
+        - address: 192.168.10.254/24
+          interface: "{{ interfaces.dmz_vpn_ext.name }}"
+    nopreempt: true
+    garp_master_delay: 1
+
+vrrp_sync_group:
+  - name: G1
+    group:
+      - extern
+      - dmz_vpn_ext
+    notify_master:
+    notify_backup:
+    notify_fault:

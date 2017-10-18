@@ -1,3 +1,4 @@
 # Install a role from the Ansible Galaxy
 - src: MichaelRigart.interfaces
 - src: mikegleasonjr.firewall
+- src: tcomerma.keepalived

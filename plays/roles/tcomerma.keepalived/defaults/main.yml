@@ -1,0 +1,24 @@
+---
+
+vrrp_instances:
+  - name: E1
+    interface: eth0
+    state: BACKUP
+    virtual_router_id: 61
+    priority: 100
+    advert_int: 1
+    authentication:
+        auth_type: PASS
+        auth_pass: zzzz
+    virtual_ipaddress:
+        - address: 10.15.7.100/24
+          interface: eth0
+    nopreempt: true
+    garp_master_delay: 1
+
+vrrp_sync_group:
+  - name: G1
+    group: [ E1 ]
+    notify_master:
+    notify_backup:
+    notify_fault:

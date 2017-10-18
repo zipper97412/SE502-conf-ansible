@@ -6,3 +6,5 @@
       tags: [ 'interface' ]
     - role: mikegleasonjr.firewall
       tags: [ 'firewall' ]
+    - role: tcomerma.keepalived
+      tags: [ 'keepalived' ]

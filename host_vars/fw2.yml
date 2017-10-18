@@ -1,12 +1,34 @@
 
-controle_interface:
-  name: ens18
-  address: 172.16.5.3
-  gateway: 172.16.5.1
-
-ens19:
-  address: 192.168.42.43
-  gateway: 192.168.42.1
+interfaces:
+  controle:
+    name: ens18
+    address: 172.16.5.3
+    gateway: 172.16.5.1
+  extern:
+    name: ens21
+    address: 192.168.200.57
+  fw_link:
+    name: ens22
+    address: 192.168.20.2
+  dmz_vpn_ext:
+    name: ens20
+    address: 192.168.10.252
+  dmz_vpn_int:
+    name: ens19
+    address: 192.168.0.252
+  dmz_publique:
+    name: ens23
+  dmz_privee:
+    name: ens24
+  dmz_client_intranet_externe:
+    name: ens25
+  dmz_client_http:
+    name: ens26
+  sw_802.1:
+    name: ens27
 
 
 firewall_v4_host_rules: {}
+
+keepalive_prio: 50
+keepalive_peer: 192.168.20.1
