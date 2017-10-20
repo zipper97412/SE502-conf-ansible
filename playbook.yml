@@ -1,0 +1,31 @@
+---
+
+- hosts: vm
+  roles:
+    - role: ansible-role-ip-route
+      tags: routes
+
+- hosts: fw
+  tasks:
+    - name: activate ip forwarding
+      sysctl:
+        name: net.ipv4.ip_forward
+        value: 1
+        sysctl_set: yes
+        state: present
+        reload: yes
+      tags: forwarding
+    - name: Install vlan (debian/ubuntu)
+      apt: name=vlan state=latest
+      tags: vlan
+  roles:
+    - role: ansible-role-interfaces
+      tags: interface
+    - role: ansible-role-ip-route
+      tags: routes
+    - role: ansible-resolv
+      tags: resolv
+    - role: ansible-role-firewall
+      tags: firewall
+    - role: ansible-keepalived
+      tags: keepalived

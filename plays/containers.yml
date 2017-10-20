@@ -1,6 +1,0 @@
----
-
-- hosts: vm
-  roles:
-    - role: amnay-mo.ip-route
-      tags: routes
