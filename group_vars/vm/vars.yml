@@ -1,6 +1,13 @@
 ansible_user: root
 
-controle_interface:
-  name: eth0
+interfaces:
+  controle:
+    name: eth0
 
-firewall_v4_group_rules: {}
+firewall_v4_group_rules:
+  001 default input policy:
+    - -P INPUT ACCEPT
+  002 default output policy:
+    - -P OUTPUT ACCEPT
+  003 default forward policy:
+    - -P FORWARD ACCEPT

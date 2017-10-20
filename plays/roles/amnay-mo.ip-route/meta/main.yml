@@ -1,0 +1,15 @@
+galaxy_info:
+  author: "Amnay Mo"
+  description: A role to configure ip routes using iproute2
+  license: MIT
+  min_ansible_version: 1.2
+  platforms:
+  - name: Ubuntu
+    versions:
+      - all
+  - name: Debian
+    versions:
+      - all
+
+  galaxy_tags: ['ip', 'route', 'network', 'networking', 'routing']
+  dependencies: []

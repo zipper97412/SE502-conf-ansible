@@ -1,0 +1,4 @@
+---
+
+- name: reload routes
+  command: /bin/sh /etc/ip_routes.sh

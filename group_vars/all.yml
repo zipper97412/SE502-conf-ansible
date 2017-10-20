@@ -1,25 +1,8 @@
+firewall_v4_default_rules: {}
 
-firewall_v4_default_rules:
-  001 default input policy:
-    - -P INPUT DROP
-  002 default output policy:
-    - -P OUTPUT DROP
-  003 default forward policy:
-    - -P FORWARD DROP
-  010 allow loopback:
-    - -A INPUT -i lo -j ACCEPT
-  020 allow ping replies:
-    - -A INPUT -p icmp --icmp-type echo-request -j ACCEPT
-    - -A OUTPUT -p icmp --icmp-type echo-reply -j ACCEPT
-  100 allow established related:
-    - -A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
-    - -A OUTPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
-  110 DNS Out:
-    - -t filter -A OUTPUT -p tcp --dport 53 -j ACCEPT
-    - -t filter -A OUTPUT -p udp --dport 53 -j ACCEPT
-  120  HTTP OUT:
-    - -t filter -A OUTPUT -p tcp --dport 80 -j ACCEPT
-    - -t filter -A OUTPUT -p tcp --dport 443 -j ACCEPT
-  200 allow ssh on control interface :
-    - -t filter -i {{ interfaces.controle.name }} -A INPUT -p tcp --dport 22 -j ACCEPT
-    - -t filter -A OUTPUT -p TCP --sport 22 -j ACCEPT
+routes_commands: "{{ routes_merged.values() | list }}"
+routes_default:
+  000 route de controle: ip route replace 10.8.0.0/24 via 172.16.5.1 dev {{ interfaces.controle.name }} onlink
+routes_group: {}
+routes_host: {}
+routes_merged: "{{ routes_default | combine(routes_group) | combine(routes_host) }}"

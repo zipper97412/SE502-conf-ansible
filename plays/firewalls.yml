@@ -1,6 +1,18 @@
 ---
 
 - hosts: fw
+  tasks:
+    - name: activate ip forwarding
+      sysctl:
+        name: net.ipv4.ip_forward
+        value: 1
+        sysctl_set: yes
+        state: present
+        reload: yes
+      tags: forwarding
+    - name: Install vlan (debian/ubuntu)
+      apt: name=vlan state=latest
+      tags: vlan
   roles:
     - role: MichaelRigart.interfaces
       tags: [ 'interface' ]

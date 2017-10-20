@@ -7,13 +7,17 @@ interfaces_ether_interfaces:
     bootproto: static
     address: "{{ interfaces.controle.address }}"
     netmask: 255.255.255.0
-    gateway: "{{ interfaces.controle.gateway }}"
-    dnsnameservers: 192.168.130.202 212.27.40.240 212.27.40.241
-    dnssearch: b120.esisar.fr
+    route:
+      - network: 10.8.0.0
+        netmask: 255.255.255.0
+        gateway: 172.16.5.1
   - device: "{{ interfaces.extern.name }}"
     bootproto: static
     address: "{{ interfaces.extern.address }}"
     netmask: 255.255.255.0
+    gateway: "{{ interfaces.extern.gateway }}"
+    dnsnameservers: 192.168.130.202 212.27.40.240 212.27.40.241
+    dnssearch: b120.esisar.fr
   - device: "{{ interfaces.dmz_vpn_ext.name }}"
     bootproto: static
     address: "{{ interfaces.dmz_vpn_ext.address }}"
@@ -26,11 +30,54 @@ interfaces_ether_interfaces:
     bootproto: static
     address: "{{ interfaces.dmz_vpn_int.address }}"
     netmask: 255.255.255.0
+  - device: "{{ interfaces.dmz_publique.name }}"
+    bootproto: static
+    address: "{{ interfaces.dmz_publique.address }}"
+    netmask: 255.255.255.0
+  - device: "{{ interfaces.dmz_privee.name }}"
+    bootproto: static
+    address: "{{ interfaces.dmz_privee.address }}"
+    netmask: 255.255.255.0
+  - device: "{{ interfaces.dmz_client_intranet_externe.name }}"
+    bootproto: static
+    address: "{{ interfaces.dmz_client_intranet_externe.address }}"
+    netmask: 255.255.255.0
+  - device: "{{ interfaces.dmz_client_http.name }}"
+    bootproto: static
+    address: "{{ interfaces.dmz_client_http.address }}"
+    netmask: 255.255.255.0
+  - device: "{{ interfaces.sw_802_1.name }}"
+    bootproto: static
+    address: "{{ interfaces.sw_802_1.address }}"
+    netmask: 255.255.255.0
 
 firewall_v4_group_rules:
-  500 keepalived:
-    - -p vrrp -A INPUT -j ACCEPT
-    - -p vrrp -A OUTPUT -j ACCEPT
+  001 default input policy:
+    - -P INPUT ACCEPT
+  002 default output policy:
+    - -P OUTPUT ACCEPT
+  003 default forward policy:
+    - -P FORWARD ACCEPT
+#  010 allow loopback:
+#    - -A INPUT -i lo -j ACCEPT
+#  020 allow ping replies:
+#    - -A INPUT -p icmp --icmp-type echo-request -j ACCEPT
+#    - -A OUTPUT -p icmp --icmp-type echo-reply -j ACCEPT
+#  100 allow established related:
+#    - -A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
+#    - -A OUTPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
+#  110 DNS Out:
+#    - -t filter -A OUTPUT -p tcp --dport 53 -j ACCEPT
+#    - -t filter -A OUTPUT -p udp --dport 53 -j ACCEPT
+#  120  HTTP OUT:
+#    - -t filter -A OUTPUT -p tcp --dport 80 -j ACCEPT
+#    - -t filter -A OUTPUT -p tcp --dport 443 -j ACCEPT
+#  200 allow ssh on control interface :
+#    - -t filter -i {{ interfaces.controle.name }} -A INPUT -p tcp --dport 22 -j ACCEPT
+#    - -t filter -A OUTPUT -p TCP --sport 22 -j ACCEPT
+#  500 keepalived:
+#    - -p vrrp -i {{ interfaces.fw_link.name }} -A INPUT -j ACCEPT
+#    - -p vrrp -A OUTPUT -j ACCEPT
 
 
 vrrp_instances:
@@ -43,13 +90,12 @@ vrrp_instances:
     authentication:
         auth_type: PASS
         auth_pass: zzzz
-    lvs_sync_daemon_interface: "{{ interfaces.fw_link.name }}"
     unicast_src_ip: "{{ interfaces.fw_link.address }}"
     unicast_peer: "{{ keepalive_peer }}"
     virtual_ipaddress:
-        - address: 192.168.200.59/24
+        - address: 192.168.130.59/24
           interface: "{{ interfaces.extern.name }}"
-    nopreempt: true
+    nopreempt: false
     garp_master_delay: 1
 
   - name: dmz_vpn_ext
@@ -61,13 +107,114 @@ vrrp_instances:
     authentication:
         auth_type: PASS
         auth_pass: zzzz
-    lvs_sync_daemon_interface: "{{ interfaces.fw_link.name }}"
     unicast_src_ip: "{{ interfaces.fw_link.address }}"
     unicast_peer: "{{ keepalive_peer }}"
     virtual_ipaddress:
         - address: 192.168.10.254/24
           interface: "{{ interfaces.dmz_vpn_ext.name }}"
-    nopreempt: true
+    nopreempt: false
+    garp_master_delay: 1
+
+  - name: dmz_vpn_int
+    interface: "{{ interfaces.fw_link.name }}"
+    state: BACKUP
+    virtual_router_id: 63
+    priority: "{{ keepalive_prio }}"
+    advert_int: 1
+    authentication:
+        auth_type: PASS
+        auth_pass: zzzz
+    unicast_src_ip: "{{ interfaces.fw_link.address }}"
+    unicast_peer: "{{ keepalive_peer }}"
+    virtual_ipaddress:
+        - address: 192.168.0.254/24
+          interface: "{{ interfaces.dmz_vpn_int.name }}"
+    nopreempt: false
+    garp_master_delay: 1
+
+  - name: dmz_publique
+    interface: "{{ interfaces.fw_link.name }}"
+    state: BACKUP
+    virtual_router_id: 64
+    priority: "{{ keepalive_prio }}"
+    advert_int: 1
+    authentication:
+        auth_type: PASS
+        auth_pass: zzzz
+    unicast_src_ip: "{{ interfaces.fw_link.address }}"
+    unicast_peer: "{{ keepalive_peer }}"
+    virtual_ipaddress:
+        - address: 192.168.30.254/24
+          interface: "{{ interfaces.dmz_publique.name }}"
+    nopreempt: false
+    garp_master_delay: 1
+
+  - name: dmz_privee
+    interface: "{{ interfaces.fw_link.name }}"
+    state: BACKUP
+    virtual_router_id: 65
+    priority: "{{ keepalive_prio }}"
+    advert_int: 1
+    authentication:
+        auth_type: PASS
+        auth_pass: zzzz
+    unicast_src_ip: "{{ interfaces.fw_link.address }}"
+    unicast_peer: "{{ keepalive_peer }}"
+    virtual_ipaddress:
+        - address: 192.168.40.254/24
+          interface: "{{ interfaces.dmz_privee.name }}"
+    nopreempt: false
+    garp_master_delay: 1
+
+  - name: dmz_client_intranet_externe
+    interface: "{{ interfaces.fw_link.name }}"
+    state: BACKUP
+    virtual_router_id: 66
+    priority: "{{ keepalive_prio }}"
+    advert_int: 1
+    authentication:
+        auth_type: PASS
+        auth_pass: zzzz
+    unicast_src_ip: "{{ interfaces.fw_link.address }}"
+    unicast_peer: "{{ keepalive_peer }}"
+    virtual_ipaddress:
+        - address: 192.168.50.254/24
+          interface: "{{ interfaces.dmz_client_intranet_externe.name }}"
+    nopreempt: false
+    garp_master_delay: 1
+
+  - name: dmz_client_http
+    interface: "{{ interfaces.fw_link.name }}"
+    state: BACKUP
+    virtual_router_id: 67
+    priority: "{{ keepalive_prio }}"
+    advert_int: 1
+    authentication:
+        auth_type: PASS
+        auth_pass: zzzz
+    unicast_src_ip: "{{ interfaces.fw_link.address }}"
+    unicast_peer: "{{ keepalive_peer }}"
+    virtual_ipaddress:
+        - address: 192.168.60.254/24
+          interface: "{{ interfaces.dmz_client_http.name }}"
+    nopreempt: false
+    garp_master_delay: 1
+
+  - name: sw_802_1
+    interface: "{{ interfaces.fw_link.name }}"
+    state: BACKUP
+    virtual_router_id: 68
+    priority: "{{ keepalive_prio }}"
+    advert_int: 1
+    authentication:
+        auth_type: PASS
+        auth_pass: zzzz
+    unicast_src_ip: "{{ interfaces.fw_link.address }}"
+    unicast_peer: "{{ keepalive_peer }}"
+    virtual_ipaddress:
+        - address: 192.168.70.254/24
+          interface: "{{ interfaces.sw_802_1.name }}"
+    nopreempt: false
     garp_master_delay: 1
 
 vrrp_sync_group:
@@ -75,6 +222,12 @@ vrrp_sync_group:
     group:
       - extern
       - dmz_vpn_ext
+      - dmz_vpn_int
+      - dmz_publique
+      - dmz_privee
+      - dmz_client_intranet_externe
+      - dmz_client_http
+      - sw_802_1
     notify_master:
     notify_backup:
     notify_fault:

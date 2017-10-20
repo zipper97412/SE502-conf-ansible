@@ -1,0 +1,7 @@
+gateway: "192.168.{{ vlan - 100 }}.254"
+interfaces:
+  fw_connected_dmz:
+    name: eth1
+
+routes_group:
+  010 default gw: ip route replace default via {{ gateway }} dev {{ interfaces.fw_connected_dmz.name }} onlink
