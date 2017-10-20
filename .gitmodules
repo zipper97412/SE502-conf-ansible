@@ -1,0 +1,17 @@
+[submodule "roles/ansible-role-ip-route"]
+	path = roles/ansible-role-ip-route
+	url = https://github.com/zipper97412/ansible-role-ip-route.git
+	branch = systemd
+[submodule "roles/ansible-keepalived"]
+	path = roles/ansible-keepalived
+	url = https://github.com/zipper97412/ansible-keepalived.git
+	branch = zipper
+[submodule "roles/ansible-resolv"]
+	path = roles/ansible-resolv
+	url = https://github.com/zipper97412/ansible-resolv.git
+[submodule "roles/ansible-role-interfaces"]
+	path = roles/ansible-role-interfaces
+	url = https://github.com/zipper97412/ansible-role-interfaces.git
+[submodule "roles/ansible-role-firewall"]
+	path = roles/ansible-role-firewall
+	url = https://github.com/zipper97412/ansible-role-firewall.git
