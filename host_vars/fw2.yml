@@ -22,7 +22,5 @@ interfaces:
     address: 192.168.70.252
 
 
-firewall_v4_host_rules: {}
-
 keepalive_prio: 50
 keepalive_peer: 192.168.20.1
