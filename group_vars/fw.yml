@@ -48,24 +48,24 @@ firewall_v4_group_rules:
     - -t filter -A OUTPUT -p tcp --dport 80 -j ACCEPT
     - -t filter -A OUTPUT -p tcp --dport 443 -j ACCEPT
   130 conntrackd UDP:
-    - -t filter -A OUTPUT -p udp --dport {{ conntrackd_listen_udp_port }} -j ACCEPT
+    - -t filter -A OUTPUT -o {{ interfaces.fw_link.name }} -p udp --dport {{ conntrackd_listen_udp_port }}  -j ACCEPT
     - -t filter -A INPUT -i {{ interfaces.fw_link.name }} -p udp --dport {{ conntrackd_listen_udp_port }} -j ACCEPT
   200 allow ssh on control interface :
-    - -t filter -i {{ interfaces.controle.name }} -A INPUT -p tcp --dport 22 -j ACCEPT
-    - -t filter -A OUTPUT -p TCP --sport 22 -j ACCEPT
+    - -t filter -A INPUT -i {{ interfaces.controle.name }} -p tcp --dport 22 -s 10.8.0.0/24 -j ACCEPT
+    #- -t filter -A OUTPUT -o {{ interfaces.controle.name }} -p tcp --sport 22 -j ACCEPT
   300 bidouille de bruchon:
     - -t nat -A PREROUTING -d 192.168.130.59 -i ens19 -j DNAT --to-destination 192.168.30.2
     - -t nat -A POSTROUTING -s 192.168.30.2 -o ens19 -j SNAT --to-source 192.168.130.59
-  310 nat vpn:
-    - -t nat -A PREROUTING -p tcp -d 192.168.130.53 --dport 7001 -j DNAT --to-destination 192.168.
+  #310 nat vpn:
+    #- -t nat -A PREROUTING -p tcp -d 192.168.130.53 --dport 7001 -j DNAT --to-destination 192.168.
 
   400 forwarding ALL dmz_public: 
     - -A FORWARD -i {{ interfaces.dmz_publique.name }} -j ACCEPT
     - -A FORWARD -o {{ interfaces.dmz_publique.name }} -j ACCEPT
   
   500 keepalived:
-    - -p vrrp -i {{ interfaces.fw_link.name }} -A INPUT -j ACCEPT
-    - -p vrrp -A OUTPUT -j ACCEPT
+    - -p vrrp -A INPUT -i {{ interfaces.fw_link.name }} -j ACCEPT
+    - -p vrrp -A OUTPUT -o {{ interfaces.fw_link.name }} -j ACCEPT
 
 interfaces:
   controle:
