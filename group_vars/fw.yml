@@ -56,8 +56,20 @@ firewall_v4_group_rules:
   300 bidouille de bruchon:
     - -t nat -A PREROUTING -d 192.168.130.59 -i ens19 -j DNAT --to-destination 192.168.30.2
     - -t nat -A POSTROUTING -s 192.168.30.2 -o ens19 -j SNAT --to-source 192.168.130.59
-  #310 nat vpn:
-    #- -t nat -A PREROUTING -p tcp -d 192.168.130.53 --dport 7001 -j DNAT --to-destination 192.168.
+  
+  600 filtrage vpn :
+    - -t nat -A PREROUTING -d 192.168.130.53 -i {{ interfaces.dmz_vpn_ext.name }} -p tcp --dport 7001 -j DNAT --to-destination 192.168.10.2
+    - -t nat -A POSTROUTING -s 192.168.10.2 -o {{ interfaces.extern.name }} -p tcp --sport 7001 -j SNAT --to-source 192.168.130.53
+
+    - -t filter -A FORWARD -i {{interfaces.dmz_vpn_int.name}} -o {{interfaces.dmz_privee.name}} -p tcp --dport 22 -d 192.168.40.0/24 -j ACCEPT 
+    #- -t filter -A FORWARD -i {{interfaces.dmz_privee.name}} -o {{interfaces.dmz_vpn_int.name}} -p tcp --sport 22 -s 192.168.0.0/24 -j ACCEPT
+
+    - -t filter -A FORWARD -i {{interfaces.dmz_vpn_int.name}} -o {{interfaces.dmz_client_intranet_externe.name}} -p tcp --dport 22 -d 192.168.50.0/24 -j ACCEPT 
+    #- -t filter -A FORWARD -i {{interfaces.dmz_client_intranet_externe.name}} -o {{interfaces.dmz_vpn_int.name}} -p tcp --sport 22 -s 192.168.0.0/24 -j ACCEPT
+
+    - -t filter -A INPUT -i {{interfaces.dmz_vpn_int.name}} -d 192.168.10.254 -p tcp --dport 22 -j ACCEPT
+    - -t filter -A OUTPUT -o {{interfaces.dmz_vpn_int.name}} -p tcp --sport 22 -j ACCEPT
+
 
   400 forwarding ALL dmz_public: 
     - -A FORWARD -i {{ interfaces.dmz_publique.name }} -j ACCEPT
@@ -66,6 +78,8 @@ firewall_v4_group_rules:
   500 keepalived:
     - -p vrrp -A INPUT -i {{ interfaces.fw_link.name }} -j ACCEPT
     - -p vrrp -A OUTPUT -o {{ interfaces.fw_link.name }} -j ACCEPT
+    
+  
 
 interfaces:
   controle:
