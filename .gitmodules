@@ -15,3 +15,6 @@
 [submodule "roles/ansible-role-firewall"]
 	path = roles/ansible-role-firewall
 	url = https://github.com/zipper97412/ansible-role-firewall.git
+[submodule "roles/ansible-conntrackd"]
+	path = roles/ansible-conntrackd
+	url = https://github.com/zipper97412/ansible-conntrackd.git
