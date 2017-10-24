@@ -3,7 +3,7 @@
 - hosts: vm
   roles:
     - { role: ansible-role-ip-route, tags: routes }
-
+    - { role: ansible-role-firewall, tags: iptables }
 - hosts: fw
   tasks:
     - name: activate ip forwarding

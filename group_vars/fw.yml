@@ -1,13 +1,6 @@
 #connexion ssh d'ansible 
 ansible_user: root
 ansible_host: "{{ interfaces.controle.address }}"
-ansible_ssh_pass: !vault |
-          $ANSIBLE_VAULT;1.1;AES256
-          33376466616366306635666539316630333931353866623630646137306361653633393232323936
-          3134393739306661363635393534353861366332623463320a613134393637356661303436316336
-          31366436333938353830666635636231323665373036343130383461386165363034633439643336
-          3838646431636233370a643139343730346662656162393830323561623362646365303430383730
-          3439
 
 #Gateway de la b120 et dns
 gateway: 192.168.130.254
@@ -35,11 +28,11 @@ interfaces_ether_interfaces: "{{
 # variable du role mikegleasonjr.firewall de définition des règles iptables
 firewall_v4_group_rules:
   001 default input policy:
-    - -P INPUT ACCEPT
+    - -P INPUT DROP
   002 default output policy:
-    - -P OUTPUT ACCEPT
+    - -P OUTPUT DROP
   003 default forward policy:
-    - -P FORWARD ACCEPT
+    - -P FORWARD DROP
   010 allow loopback:
     - -A INPUT -i lo -j ACCEPT
   020 allow ping replies:
@@ -63,6 +56,8 @@ firewall_v4_group_rules:
   300 bidouille de bruchon:
     - -t nat -A PREROUTING -d 192.168.130.59 -i ens19 -j DNAT --to-destination 192.168.30.2
     - -t nat -A POSTROUTING -s 192.168.30.2 -o ens19 -j SNAT --to-source 192.168.130.59
+  310 nat vpn:
+    - -t nat -A PREROUTING -p tcp -d 192.168.130.53 --dport 7001 -j DNAT --to-destination 192.168.
 
   400 forwarding ALL dmz_public: 
     - -A FORWARD -i {{ interfaces.dmz_publique.name }} -j ACCEPT
@@ -79,60 +74,97 @@ interfaces:
     name: ens20.120
   extern:
     name: ens19
-    virt_address: 192.168.130.59
+    virt_address: 
+      - 192.168.130.53 # vpn
+      - 192.168.130.54
+      - 192.168.130.55
+      - 192.168.130.56
+      - 192.168.130.59
   dmz_vpn_ext:
     name: ens20.110
-    virt_address: 192.168.10.254
+    virt_address: [192.168.10.254]
   dmz_vpn_int:
     name: ens20.100
-    virt_address: 192.168.0.254
+    virt_address: [192.168.0.254]
   dmz_publique:
     name: ens20.130
-    virt_address: 192.168.30.254
+    virt_address: [192.168.30.254]
   dmz_privee:
     name: ens20.140
-    virt_address: 192.168.40.254
+    virt_address: [192.168.40.254]
   dmz_client_intranet_externe:
     name: ens20.150
-    virt_address: 192.168.50.254
+    virt_address: [192.168.50.254]
   dmz_client_http:
     name: ens20.160
-    virt_address: 192.168.60.254
+    virt_address: [192.168.60.254]
   sw_802_1:
     name: ens20.170
-    virt_address: 192.168.70.254
+    virt_address: [192.168.70.254]
 
-vrrp_instances: "[
-  {% for key, value in interfaces.iteritems() %}
-    {% if value.virt_address is defined %}
-    {
-      'name': '{{ key }}',
-      'interface': '{{ interfaces.fw_link.name }}',
-      'state': 'BACKUP',
-      'virtual_router_id': {{ loop.index + 60 }},
-      'priority': '{{ keepalive_prio }}',
-      'advert_int': 1,
-      'authentication': 
+#vrrp_instances: "[
+#  {% for key, value in interfaces.iteritems() %}
+#    {% if value.virt_address is defined %}
+#    {
+#      'name': '{{ key }}',
+#      'interface': '{{ interfaces.fw_link.name }}',
+#      'state': 'BACKUP',
+#      'virtual_router_id': {{ loop.index + 60 }},
+#      'priority': '{{ keepalive_prio }}',
+#      'advert_int': 1,
+#      'authentication': 
+#        {
+#          'auth_type': 'PASS',
+#          'auth_pass': 'zzzz',
+#        },
+#      'unicast_src_ip': '{{ interfaces.fw_link.address }}',
+#      'unicast_peer': '{{ keepalive_peer }}',
+#      'virtual_ipaddress': 
+#        [
+#          {% for address in value.virt_address %}
+#          {
+#            'address': '{{ address }}/24',
+#            'interface': '{{ value.name }}',
+#          },
+#          {% endfor %}
+#        ],
+#      'nopreempt': false,
+#      'garp_master_delay': '1',
+#    },
+#    {% endif %}
+#  {% endfor %}
+#  ]
+#"
+
+vrrp_instances:
+  - name: VI_FW
+    interface: "{{ interfaces.fw_link.name }}"
+    state: BACKUP
+    virtual_router_id: 60
+    priority: "{{ keepalive_prio }}"
+    advert_int: 1
+    authentication: 
+      auth_type: PASS
+      auth_pass: zzzz
+    unicast_src_ip: "{{ interfaces.fw_link.address }}"
+    unicast_peer: "{{ keepalive_peer }}"
+    virtual_ipaddress: "[
+        {% for key, value in interfaces.iteritems() %}
+        {% if value.virt_address is defined %}
+        {% for address in value.virt_address %}
         {
-          'auth_type': 'PASS',
-          'auth_pass': 'zzzz',
+          'address': '{{ address }}',
+          'interface': '{{ value.name }}',
         },
-      'unicast_src_ip': '{{ interfaces.fw_link.address }}',
-      'unicast_peer': '{{ keepalive_peer }}',
-      'virtual_ipaddress': 
-        [
-          {
-            'address': '{{ value.virt_address }}/24',
-            'interface': '{{ value.name }}',
-          },
-        ],
-      'nopreempt': false,
-      'garp_master_delay': '1',
-    },
-    {% endif %}
-  {% endfor %}
-  ]
-"
+        {% endfor %}
+        {% endif %}
+        {% endfor %}
+    ]"
+    nopreempt: false
+    garp_master_delay: 1
+    #virtual_routes:
+    #  - default via {{ gateway }} dev {{ interfaces.extern.name }}
+    #  - 192.168.130.0/24 dev {{ interfaces.extern.name }}
 
 vrrp_sync_group:
   - name: G1
