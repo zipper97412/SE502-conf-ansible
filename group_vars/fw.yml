@@ -31,11 +31,6 @@ interfaces_ether_interfaces: "{{
                   netmask: '255.255.255.0'}\")
 }}"
 
-# autorisation de sortie pour les machines internes au réseau
-postrouting:
-  - ip: 192.168.30.2
-  - ip: 192.168.30.3
-  - ip: 192.168.10.2
 
 # variable du role mikegleasonjr.firewall de définition des règles iptables
 firewall_v4_group_rules:
@@ -45,33 +40,37 @@ firewall_v4_group_rules:
     - -P OUTPUT ACCEPT
   003 default forward policy:
     - -P FORWARD ACCEPT
-# règeles de postrouting
-  300 nat postrouting: "{{ 
-    postrouting | 
-    json_query(\"[].ip\") | 
-    map('regex_replace', '(.*)', '-t nat -A POSTROUTING -s \\1 -o ens19 -j MASQUERADE') |  
-    list 
-  }}"
-#  010 allow loopback:
-#    - -A INPUT -i lo -j ACCEPT
-#  020 allow ping replies:
-#    - -A INPUT -p icmp --icmp-type echo-request -j ACCEPT
-#    - -A OUTPUT -p icmp --icmp-type echo-reply -j ACCEPT
-#  100 allow established related:
-#    - -A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
-#    - -A OUTPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
-#  110 DNS Out:
-#    - -t filter -A OUTPUT -p tcp --dport 53 -j ACCEPT
-#    - -t filter -A OUTPUT -p udp --dport 53 -j ACCEPT
-#  120  HTTP OUT:
-#    - -t filter -A OUTPUT -p tcp --dport 80 -j ACCEPT
-#    - -t filter -A OUTPUT -p tcp --dport 443 -j ACCEPT
-#  200 allow ssh on control interface :
-#    - -t filter -i {{ interfaces.controle.name }} -A INPUT -p tcp --dport 22 -j ACCEPT
-#    - -t filter -A OUTPUT -p TCP --sport 22 -j ACCEPT
-#  500 keepalived:
-#    - -p vrrp -i {{ interfaces.fw_link.name }} -A INPUT -j ACCEPT
-#    - -p vrrp -A OUTPUT -j ACCEPT
+  010 allow loopback:
+    - -A INPUT -i lo -j ACCEPT
+  020 allow ping replies:
+    - -A INPUT -p icmp --icmp-type echo-request -j ACCEPT
+    - -A OUTPUT -p icmp --icmp-type echo-reply -j ACCEPT
+  100 allow established related:
+    - -A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
+    - -A OUTPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
+  110 DNS Out:
+    - -t filter -A OUTPUT -p tcp --dport 53 -j ACCEPT
+    - -t filter -A OUTPUT -p udp --dport 53 -j ACCEPT
+  120 HTTP OUT:
+    - -t filter -A OUTPUT -p tcp --dport 80 -j ACCEPT
+    - -t filter -A OUTPUT -p tcp --dport 443 -j ACCEPT
+  130 conntrackd UDP:
+    - -t filter -A OUTPUT -p udp --dport {{ conntrackd_listen_udp_port }} -j ACCEPT
+    - -t filter -A INPUT -i {{ interfaces.fw_link.name }} -p udp --dport {{ conntrackd_listen_udp_port }} -j ACCEPT
+  200 allow ssh on control interface :
+    - -t filter -i {{ interfaces.controle.name }} -A INPUT -p tcp --dport 22 -j ACCEPT
+    - -t filter -A OUTPUT -p TCP --sport 22 -j ACCEPT
+  300 bidouille de bruchon:
+    - -t nat -A PREROUTING -d 192.168.130.59 -i ens19 -j DNAT --to-destination 192.168.30.2
+    - -t nat -A POSTROUTING -s 192.168.30.2 -o ens19 -j SNAT --to-source 192.168.130.59
+
+  400 forwarding ALL dmz_public: 
+    - -A FORWARD -i {{ interfaces.dmz_publique.name }} -j ACCEPT
+    - -A FORWARD -o {{ interfaces.dmz_publique.name }} -j ACCEPT
+  
+  500 keepalived:
+    - -p vrrp -i {{ interfaces.fw_link.name }} -A INPUT -j ACCEPT
+    - -p vrrp -A OUTPUT -j ACCEPT
 
 interfaces:
   controle:
@@ -127,7 +126,7 @@ vrrp_instances: "[
             'interface': '{{ value.name }}',
           },
         ],
-      'nopreempt': 'false',
+      'nopreempt': false,
       'garp_master_delay': '1',
     },
     {% endif %}
@@ -138,6 +137,22 @@ vrrp_instances: "[
 vrrp_sync_group:
   - name: G1
     group: "{{ vrrp_instances | json_query(\"[].name\") | list }}"
-    notify_master:
-    notify_backup:
-    notify_fault:
+    notify_master: /etc/conntrackd/primary-backup.sh primary
+    notify_backup: /etc/conntrackd/primary-backup.sh backup
+    notify_fault: /etc/conntrackd/primary-backup.sh fault
+
+conntrackd_listen_address: "{{ interfaces.fw_link.address }}"
+conntrackd_peer_address: "{{ keepalive_peer }}"
+conntrackd_listen_udp_port: 3780
+conntrackd_link_interface: "{{ interfaces.fw_link.name }}"
+enable_conntrackd: true
+config_conntrackd: true
+conntrackd_ignore_addresses: "[
+  {% if interfaces.controle.address is defined %}
+  '{{ interfaces.controle.address }}',
+  {% endif %}
+  {% if interfaces.fw_link.address is defined %}
+  '{{ interfaces.fw_link.address }}',
+  {% endif %}
+]"
+#conntrackd_ignore_addresses: []

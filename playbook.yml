@@ -18,8 +18,9 @@
       apt: name=vlan state=latest
       tags: vlan
   roles:
-    - { role: ansible-role-interfaces, tags: interface }
     - { role: ansible-role-ip-route, tags: routes }
+    - { role: ansible-role-interfaces, tags: interface }
     - { role: ansible-resolv, tags: resolv }
-    - { role: ansible-role-firewall, tags: firewall }
+    - { role: ansible-role-firewall, tags: iptables }
     - { role: ansible-keepalived, tags: keepalived }
+    - { role: ansible-conntrackd, tags: conntrackd }
