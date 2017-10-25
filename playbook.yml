@@ -4,6 +4,7 @@
   roles:
     - { role: ansible-role-ip-route, tags: routes }
     - { role: ansible-role-firewall, tags: iptables }
+    - { role: Stouts.openvpn, tags: openvpn }
 - hosts: fw
   tasks:
     - name: activate ip forwarding
