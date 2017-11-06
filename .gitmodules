@@ -21,3 +21,6 @@
 [submodule "roles/Stouts.openvpn"]
 	path = roles/Stouts.openvpn
 	url = https://github.com/zipper97412/Stouts.openvpn.git
+[submodule "roles/ansible-role-bind"]
+	path = roles/ansible-role-bind
+	url = https://github.com/zipper97412/ansible-role-bind.git
