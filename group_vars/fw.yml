@@ -108,40 +108,6 @@ interfaces:
     name: ens20.170
     virt_address: [192.168.70.254]
 
-#vrrp_instances: "[
-#  {% for key, value in interfaces.iteritems() %}
-#    {% if value.virt_address is defined %}
-#    {
-#      'name': '{{ key }}',
-#      'interface': '{{ interfaces.fw_link.name }}',
-#      'state': 'BACKUP',
-#      'virtual_router_id': {{ loop.index + 60 }},
-#      'priority': '{{ keepalive_prio }}',
-#      'advert_int': 1,
-#      'authentication': 
-#        {
-#          'auth_type': 'PASS',
-#          'auth_pass': 'zzzz',
-#        },
-#      'unicast_src_ip': '{{ interfaces.fw_link.address }}',
-#      'unicast_peer': '{{ keepalive_peer }}',
-#      'virtual_ipaddress': 
-#        [
-#          {% for address in value.virt_address %}
-#          {
-#            'address': '{{ address }}/24',
-#            'interface': '{{ value.name }}',
-#          },
-#          {% endfor %}
-#        ],
-#      'nopreempt': false,
-#      'garp_master_delay': '1',
-#    },
-#    {% endif %}
-#  {% endfor %}
-#  ]
-#"
-
 vrrp_instances:
   - name: VI_FW
     interface: "{{ interfaces.fw_link.name }}"
@@ -168,9 +134,13 @@ vrrp_instances:
     ]"
     nopreempt: false
     garp_master_delay: 1
-    #virtual_routes:
-    #  - default via {{ gateway }} dev {{ interfaces.extern.name }}
-    #  - 192.168.130.0/24 dev {{ interfaces.extern.name }}
+    track_interface: "[
+        {% for key, value in interfaces.iteritems() %}
+        {% if value.virt_address is defined %}
+        '{{ value.name }}',
+        {% endif %}
+        {% endfor %}
+    ]"
 
 vrrp_sync_group:
   - name: G1
