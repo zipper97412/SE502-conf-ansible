@@ -4,17 +4,10 @@ ansible_host: "{{ interfaces.controle.address }}"
 
 #Gateway de la b120 et dns
 gateway: 192.168.130.254
-resolv_nameservers:
-  - 192.168.130.202 
-  - 212.27.40.240 
-  - 212.27.40.241
-resolv_domain: b120.esisar.fr
-resolv_search:
-  - b120.esisar.fr
 # route pour la gateway
 routes_group:
   010 default gw: ip route replace default via {{ gateway }} dev {{ interfaces.extern.name }} onlink
-  020 vpn 1: ip route replace 10.9.0.0/24 via 192.168.0.2 dev {{ interfaces.dmz_vpn_int.name }} onlink
+  020 vpn 1: ip route replace 192.168.5.0/24 via 192.168.0.2 dev {{ interfaces.dmz_vpn_int.name }} onlink
 
 # variable du role MichaelRigart.interfaces, generation en fonction de la variable interfaces
 interfaces_ether_interfaces: "{{
@@ -44,8 +37,7 @@ firewall_v4_group_rules:
     - -A OUTPUT -m conntrack --ctstate ESTABLISHED -j ACCEPT
     - -A FORWARD -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
   110 DNS Out:
-    - -t filter -A OUTPUT -p tcp --dport 53 -j ACCEPT
-    - -t filter -A OUTPUT -p udp --dport 53 -j ACCEPT
+    - -t filter -A OUTPUT -o {{ interfaces.dmz_publique.name }} -p udp --dport 53 -d 192.168.30.2 -j ACCEPT
   120 HTTP OUT:
     - -t filter -A OUTPUT -p tcp --dport 80 -j ACCEPT
     - -t filter -A OUTPUT -p tcp --dport 443 -j ACCEPT
@@ -54,18 +46,27 @@ firewall_v4_group_rules:
     - -t filter -A INPUT -i {{ interfaces.fw_link.name }} -p udp --dport {{ conntrackd_listen_udp_port }} -j ACCEPT
   200 allow ssh:
     - -t filter -A INPUT -i {{ interfaces.controle.name }} -p tcp --dport 22 -s 10.8.0.0/24 -d {{ interfaces.controle.address }} -j ACCEPT
-    - -t filter -A INPUT -i {{ interfaces.dmz_vpn_int.name }} -p tcp --dport 22 -s 10.9.0.0/24 -d {{ interfaces.dmz_vpn_int.address }} -j ACCEPT
-  
+    - -t filter -A INPUT -i {{ interfaces.dmz_vpn_int.name }} -p tcp --dport 22 -s 192.168.5.0/24 -d {{ interfaces.dmz_vpn_int.address }} -j ACCEPT
   600 accès vpn:
     - -t nat -A PREROUTING -d 192.168.130.53 -i {{ interfaces.extern.name }} -p tcp --dport 7001 -j DNAT --to-destination 192.168.10.2
-    - -t nat -A POSTROUTING -s 192.168.10.2 -o {{ interfaces.extern.name }} -p tcp --sport 7001 -j SNAT --to-source 192.168.130.53
     - -t filter -A FORWARD -i {{interfaces.extern.name}} -o {{interfaces.dmz_vpn_ext.name}} -d 192.168.10.2 -p tcp --dport 7001 -j ACCEPT
   610 vpn, accès dmz_privee:
-    - -t filter -A FORWARD -i {{interfaces.dmz_vpn_int.name}} -o {{interfaces.dmz_privee.name}} -s 10.9.0.0/24 -p tcp --dport 22 -d 192.168.40.0/24 -j ACCEPT 
-    #- -t filter -A FORWARD -i {{interfaces.dmz_privee.name}} -o {{interfaces.dmz_vpn_int.name}} -p tcp --sport 22 -s 192.168.0.0/24 -j ACCEPT
+    - -t filter -A FORWARD -i {{interfaces.dmz_vpn_int.name}} -o {{interfaces.dmz_privee.name}} -s 192.168.5.0/24 -p tcp --dport 22 -d 192.168.40.0/24 -j ACCEPT 
   620 vpn, accès dmz_client_intranet_externe:
-    - -t filter -A FORWARD -i {{interfaces.dmz_vpn_int.name}} -o {{interfaces.dmz_client_intranet_externe.name}} -s 10.9.0.0/24 -p tcp --dport 22 -d 192.168.50.0/24 -j ACCEPT 
-  #  #- -t filter -A FORWARD -i {{interfaces.dmz_client_intranet_externe.name}} -o {{interfaces.dmz_vpn_int.name}} -p tcp --sport 22 -s 192.168.0.0/24 -j ACCEPT
+    - -t filter -A FORWARD -i {{interfaces.dmz_vpn_int.name}} -o {{interfaces.dmz_client_intranet_externe.name}} -s 192.168.5.0/24 -p tcp --dport 22 -d 192.168.50.0/24 -j ACCEPT 
+  630 accès dns_publique:
+    - -t nat -A PREROUTING -d 192.168.130.54 -i {{ interfaces.extern.name }} -p udp --dport 53 -j DNAT --to-destination 192.168.30.2
+  631 dns_publique reqêtes locales et externes:
+    - -t filter -A FORWARD -o {{ interfaces.dmz_publique.name }} -p udp --dport 53 -d 192.168.30.2 -j ACCEPT
+  639 dns_publique accès dns b120:
+    #- -t nat -A POSTROUTING -d 192.168.130.54 -i {{ interfaces.extern.name }} -p udp --sport 53 -j SNAT --to-destination 192.168.30.2
+    - -t nat -A POSTROUTING -s 192.168.30.2 -o {{ interfaces.extern.name }} -p udp --dport 53 -j SNAT --to-source 192.168.130.54
+    - -t filter -A FORWARD -i {{interfaces.dmz_publique.name}} -o {{interfaces.extern.name}} -s 192.168.30.2 -p udp --dport 53 -d 192.168.130.202 -j ACCEPT
+  700 postfix:
+    - -t nat -A PREROUTING -p tcp --dport 25 -d 192.168.130.53 -j DNAT --to-destination 192.168.30.3
+    - -A FORWARD -o {{interfaces.dmz_publique.name}} -p tcp --dport 25 -j ACCEPT
+    - -t nat -A POSTROUTING -p tcp --dport 25 -s 192.168.30.3 -j SNAT --to-source 192.168.130.53
+    - -A FORWARD -i {{interfaces.dmz_publique.name}} -p tcp --dport 25 -j ACCEPT
 
   500 keepalived:
     - -p vrrp -A INPUT -i {{ interfaces.fw_link.name }} -j ACCEPT
@@ -82,10 +83,10 @@ interfaces:
     name: ens19
     virt_address: 
       - 192.168.130.53 # vpn
-      - 192.168.130.54
-      - 192.168.130.55
-      - 192.168.130.56
-      - 192.168.130.59
+      - 192.168.130.54 # dns_publique ?
+      - 192.168.130.55 # mail ?
+      - 192.168.130.56 
+      - 192.168.130.59 # fw
   dmz_vpn_ext:
     name: ens20.110
     virt_address: [192.168.10.254]

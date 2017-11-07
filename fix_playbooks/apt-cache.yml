@@ -1,0 +1,4 @@
+- hosts: fw
+  tasks:
+    - name: remove /var/lib/apt/lists/*
+      command: rm -rf /var/lib/apt/lists/*

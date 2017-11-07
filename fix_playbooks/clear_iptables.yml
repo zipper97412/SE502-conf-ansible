@@ -1,0 +1,9 @@
+
+- hosts: vm
+  tasks:
+    - name: remove script
+      command: rm -f /etc/iptables.*
+    - name: remove rules
+      command: rm -f /etc/iptables/rules*
+    - name:
+      command: reboot

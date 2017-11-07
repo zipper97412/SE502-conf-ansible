@@ -3,7 +3,7 @@
 openvpn_host: 192.168.130.53              # The server address
 openvpn_port: 7001
 openvpn_proto: tcp
-openvpn_server: 10.9.0.0 255.255.255.0              # Set empty for skip
+openvpn_server: 192.168.5.0 255.255.255.0              # Set empty for skip
 openvpn_cipher: AES-256-CBC                              # Encryption algorithm
 openvpn_tls_auth : true                            # Enable perfect forward secracyxy
 openvpn_client_to_client: no
