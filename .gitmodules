@@ -24,3 +24,9 @@
 [submodule "roles/ansible-role-bind"]
 	path = roles/ansible-role-bind
 	url = https://github.com/zipper97412/ansible-role-bind.git
+[submodule "roles/ansible-role-nginx"]
+	path = roles/ansible-role-nginx
+	url = https://github.com/zipper97412/ansible-role-nginx.git
+[submodule "roles/ansible-haproxy"]
+	path = roles/ansible-haproxy
+	url = https://github.com/zipper97412/ansible-haproxy.git

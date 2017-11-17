@@ -1,0 +1,8 @@
+
+interfaces:
+  dmz_client_http:
+    address: 192.168.60.2
+
+
+keepalive_prio: 100
+keepalive_peer: 192.168.60.3

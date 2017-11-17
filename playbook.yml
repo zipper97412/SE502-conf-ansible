@@ -4,6 +4,7 @@
   roles:
     - { role: ansible-role-ip-route, tags: routes }
     - { role: ansible-role-firewall, tags: iptables }
+    - { role: ansible-resolv, tags: resolv }
 
 - hosts: vpn
   roles:
@@ -12,6 +13,25 @@
 - hosts: dns_publique
   roles:
     - { role: ansible-role-bind, tags: bind }
+
+- hosts: web_failover:load_bal
+  roles:
+    - { role: ansible-keepalived, tags: keepalived }
+
+- hosts: web_failover
+  roles:
+    - { role: ansible-role-nginx, tags: nginx }
+
+- hosts: load_bal
+  tasks:
+    - name: activate ip forwarding
+      sysctl:
+        name: net.ipv4.ip_forward
+        value: 1
+        sysctl_set: yes
+        state: present
+        reload: yes
+      tags: forwarding
 
 - hosts: fw
   tasks:
@@ -28,6 +48,5 @@
       tags: vlan
   roles:
     - { role: ansible-role-interfaces, tags: interface }
-    - { role: ansible-resolv, tags: resolv }
     - { role: ansible-keepalived, tags: keepalived }
     - { role: ansible-conntrackd, tags: conntrackd }

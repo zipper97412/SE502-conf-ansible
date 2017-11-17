@@ -2,8 +2,9 @@
 - hosts: vm
   tasks:
     - name: remove script
-      command: rm -f /etc/iptables.*
-    - name: remove rules
-      command: rm -f /etc/iptables/rules*
-    - name:
-      command: reboot
+      file: 
+        path: "{{item}}"
+        state: absent
+      with_items:
+        - /etc/iptables/rules.v4
+        - /etc/iptables/rules.v6

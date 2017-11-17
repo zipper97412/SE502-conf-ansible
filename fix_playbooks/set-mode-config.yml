@@ -1,0 +1,6 @@
+- hosts: all
+  tasks:
+    - name: set default route
+      command: ip route replace default via 172.16.5.1
+    - name: set dns
+      command: "echo \"nameserver 8.8.8.8\" > /etc/resolv.conf"

@@ -1,0 +1,15 @@
+gateway: "192.168.65.11"
+
+routes_group:
+  010 default gw: ip route replace default via {{ gateway }} dev eth1 onlink
+
+
+
+nginx_user: "www-data"
+nginx_sites:
+ default:
+     - listen 80
+     - server_name _
+     - root "/usr/share/nginx/html"
+     - index index.html
+

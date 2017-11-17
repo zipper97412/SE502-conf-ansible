@@ -1,0 +1,28 @@
+
+
+vrrp_instances:
+  - name: VI_LOAD_BAL
+    interface: eth1
+    state: BACKUP
+    virtual_router_id: 70
+    priority: "{{ keepalive_prio }}"
+    advert_int: 1
+    authentication: 
+      auth_type: PASS
+      auth_pass: zzzz
+    unicast_src_ip: "{{ interfaces.dmz_client_http.address }}"
+    unicast_peer: "{{ keepalive_peer }}"
+    virtual_ipaddress:
+      - interface: eth1
+        address: 192.168.60.11
+      - interface: eth2
+        address: 192.168.65.11
+    nopreempt: false
+    garp_master_delay: 1
+    track_interface: 
+      - eth1
+      - eth2
+
+vrrp_sync_group:
+  - name: G1
+    group: "{{ vrrp_instances | json_query(\"[].name\") | list }}"

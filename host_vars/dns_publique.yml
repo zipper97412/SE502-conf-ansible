@@ -1,4 +1,4 @@
-public_address: 192.168.130.54
+public_address: 192.168.130.53
 interface:
   dmz_publique:
     address: 192.168.30.2
@@ -49,7 +49,7 @@ bind_zones_externe:
       - { name: '@', type: ns, value: ns1 }
       - { name: ns1, type: a, value: '{{ public_address }}' }
       - { name: '@', type: mx, priority: 10, value: mail }
-      - { name: mail, type: a, value: 192.168.130.55 }
+      - { name: mail, type: a, value: 192.168.130.53 }
   rascasse.fr:
     ns_primary: ns1.rascasse.fr
     mail: abuse.esihosting.com

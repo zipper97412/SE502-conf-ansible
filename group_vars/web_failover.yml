@@ -1,0 +1,41 @@
+
+
+vrrp_instances:
+  - name: VI_WEB_FAILOVER
+    interface: eth1
+    state: BACKUP
+    virtual_router_id: 60
+    priority: "{{ keepalive_prio }}"
+    advert_int: 1
+    authentication: 
+      auth_type: PASS
+      auth_pass: zzzz
+    unicast_src_ip: "{{ interfaces.dmz_client_http.address }}"
+    unicast_peer: "{{ keepalive_peer }}"
+    virtual_ipaddress:
+      - interface: eth1
+        address: 192.168.60.1
+    nopreempt: false
+    garp_master_delay: 1
+    track_interface: 
+      - eth1
+
+vrrp_sync_group:
+  - name: G1
+    group: "{{ vrrp_instances | json_query(\"[].name\") | list }}"
+
+
+
+# The user to run nginx
+nginx_user: "www-data"
+
+# A list of hashes that define the servers for nginx,
+# as with http parameters. Any valid server parameters
+# can be defined here.
+nginx_sites:
+ default:
+     - listen 80
+     - server_name _
+     - root "/usr/share/nginx/html"
+     - index index.html
+

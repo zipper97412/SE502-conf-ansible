@@ -1,0 +1,10 @@
+
+interfaces:
+  dmz_client_http:
+    address: 192.168.60.13
+  dmz_web:
+    address: 192.168.65.13
+
+
+keepalive_prio: 50
+keepalive_peer: 192.168.60.12
