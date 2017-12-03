@@ -2,13 +2,17 @@
 ansible_user: root
 ansible_host: "{{ interfaces.controle.address }}"
 
+resolv_nameservers:
+  - 192.168.30.2
+
 #Gateway de la b120 et dns
 gateway: 192.168.130.254
 # route pour la gateway
 routes_group:
   010 default gw: ip route replace default via {{ gateway }} dev {{ interfaces.extern.name }} onlink
   020 vpn 1: ip route replace 192.168.5.0/24 via 192.168.0.2 dev {{ interfaces.dmz_vpn_int.name }} onlink
-  030 dmz_web: ip route replace 192.168.65.0/24 via 192.168.65.11 dev {{ interfaces.dmz_client_http.name }} onlink
+  030 dmz_web: ip route replace 192.168.65.0/24 via 192.168.60.11 dev {{ interfaces.dmz_client_http.name }} onlink
+  
 
 # variable du role MichaelRigart.interfaces, generation en fonction de la variable interfaces
 interfaces_ether_interfaces: "{{
@@ -54,10 +58,11 @@ firewall_v4_group_rules:
   600 accès vpn:
     - -t nat -A PREROUTING -d 192.168.130.53 -i {{ interfaces.extern.name }} -p tcp --dport 7001 -j DNAT --to-destination 192.168.10.2
     - -t filter -A FORWARD -i {{interfaces.extern.name}} -o {{interfaces.dmz_vpn_ext.name}} -d 192.168.10.2 -p tcp --dport 7001 -j ACCEPT
+  601 accès vpn_intranet:
+    - -t nat -A PREROUTING -d 192.168.130.54 -i {{ interfaces.extern.name }} -p tcp --dport 7001 -j DNAT --to-destination 192.168.50.2
+    - -t filter -A FORWARD -i {{interfaces.extern.name}} -o {{interfaces.dmz_client_intranet_externe.name}} -d 192.168.50.2 -p tcp --dport 7001 -j ACCEPT
   610 vpn, accès dmz_privee:
     - -t filter -A FORWARD -i {{interfaces.dmz_vpn_int.name}} -o {{interfaces.dmz_privee.name}} -s 192.168.5.0/24 -p tcp --dport 22 -d 192.168.40.0/24 -j ACCEPT 
-  620 vpn, accès dmz_client_intranet_externe:
-    - -t filter -A FORWARD -i {{interfaces.dmz_vpn_int.name}} -o {{interfaces.dmz_client_intranet_externe.name}} -s 192.168.5.0/24 -p tcp --dport 22 -d 192.168.50.0/24 -j ACCEPT 
   630 accès dns_publique:
     - -t nat -A PREROUTING -d 192.168.130.53 -i {{ interfaces.extern.name }} -p udp --dport 53 -j DNAT --to-destination 192.168.30.2
   631 dns_publique reqêtes locales et externes:
@@ -74,7 +79,20 @@ firewall_v4_group_rules:
   800 web failover:
     - -t nat -A PREROUTING -p tcp --dport 80 -d 192.168.130.53 -j DNAT --to-destination 192.168.60.1
     - -A FORWARD -o {{interfaces.dmz_client_http.name}} -p tcp --dport 80 -j ACCEPT
-  
+  810 web ha:
+    - -t nat -A PREROUTING -p tcp --dport 80 -d 192.168.130.54 -j DNAT --to-destination 192.168.60.11
+    - -A FORWARD -o {{interfaces.dmz_client_http.name}} -p tcp --dport 80 -j ACCEPT
+    - -t nat -A PREROUTING -p tcp --dport 443 -d 192.168.130.54 -j DNAT --to-destination 192.168.60.11
+    - -A FORWARD -o {{interfaces.dmz_client_http.name}} -p tcp --dport 443 -j ACCEPT
+  810 accès vpn:
+    - -t nat -A PREROUTING -d 192.168.130.54 -i {{ interfaces.extern.name }} -p tcp --dport 80 -j DNAT --to-destination 192.168.60.11
+    - -t filter -A FORWARD -i {{interfaces.extern.name}} -o {{interfaces.dmz_client_http.name}} -d 192.168.60.11 -p tcp --dport 80 -j ACCEPT
+  850 accès ldap:
+    - -t filter -A FORWARD -o {{interfaces.dmz_privee.name}} -d 192.168.40.3 -s 192.168.0.0/17 -p tcp --dport 389 -j ACCEPT
+    - -t filter -A FORWARD -o {{interfaces.dmz_privee.name}} -d 192.168.40.3 -s 192.168.0.0/17 -p tcp --dport 636 -j ACCEPT
+  860 envoi logs:
+    - -t filter -A OUTPUT -o {{interfaces.dmz_privee.name}} -d 192.168.40.4 -p udp --dport 514 -j ACCEPT
+    - -t filter -A FORWARD -o {{interfaces.dmz_privee.name}} -d 192.168.40.4 -s 192.168.0.0/17 -p udp --dport 514 -j ACCEPT
   # TODO à supprimer
   121 HTTP OUT ALL HOST:
     - -t nat -A POSTROUTING -p tcp --dport 80 -j SNAT --to-source 192.168.130.53

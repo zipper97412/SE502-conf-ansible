@@ -22,7 +22,34 @@ vrrp_instances:
     track_interface: 
       - eth1
       - eth2
+    track_script:
+      - check_haproxy
 
 vrrp_sync_group:
   - name: G1
     group: "{{ vrrp_instances | json_query(\"[].name\") | list }}"
+
+vrrp_scripts:
+  - name: check_haproxy
+    lines:
+      - script "/bin/pidof haproxy"
+      - interval 2
+
+
+# Frontend settings.
+haproxy_frontend_name: 'hafrontend'
+haproxy_frontend_crt: /etc/ssl/rascasse.fr/rascasse.fr.pem
+haproxy_frontend_mode: 'http'
+
+# Backend settings.
+haproxy_backend_name: 'habackend'
+haproxy_backend_mode: 'http'
+haproxy_backend_balance_method: 'roundrobin'
+haproxy_backend_httpchk: 'HEAD / HTTP/1.1\r\nHost:localhost'
+
+# List of backend servers.
+haproxy_backend_servers:
+  - name: web_srv1
+    address: 192.168.65.2:80
+  - name: web_srv2
+    address: 192.168.65.3:80

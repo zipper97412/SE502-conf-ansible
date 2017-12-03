@@ -27,6 +27,15 @@
 [submodule "roles/ansible-role-nginx"]
 	path = roles/ansible-role-nginx
 	url = https://github.com/zipper97412/ansible-role-nginx.git
-[submodule "roles/ansible-haproxy"]
-	path = roles/ansible-haproxy
-	url = https://github.com/zipper97412/ansible-haproxy.git
+[submodule "roles/ansible-role-haproxy"]
+	path = roles/ansible-role-haproxy
+	url = https://github.com/zipper97412/ansible-role-haproxy.git
+[submodule "roles/openldap_server"]
+	path = roles/openldap_server
+	url = https://github.com/zipper97412/openldap_server.git
+[submodule "roles/ansible-openldap"]
+	path = roles/ansible-openldap
+	url = https://github.com/zipper97412/ansible-openldap.git
+[submodule "roles/ansible-rsyslog"]
+	path = roles/ansible-rsyslog
+	url = https://github.com/zipper97412/ansible-rsyslog.git

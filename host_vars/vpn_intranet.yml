@@ -1,0 +1,46 @@
+
+# Default settings (See OpenVPN documentation)
+openvpn_host: 192.168.130.54              # The server address
+openvpn_port: 7001
+openvpn_proto: tcp
+openvpn_server: 192.168.53.0 255.255.255.0              # Set empty for skip
+openvpn_cipher: AES-256-CBC                              # Encryption algorithm
+openvpn_tls_auth : true                            # Enable perfect forward secracyxy
+openvpn_client_to_client: no
+openvpn_key_country: FR
+openvpn_key_province: FR
+openvpn_key_city: FR
+openvpn_key_org: Esihost
+openvpn_key_email: esihost@rascasse.fr
+openvpn_key_size: 2048
+openvpn_server_options:
+  - push "route 192.168.55.0 255.255.255.0"
+
+openvpn_lxc_tun_correction: true
+
+openvpn_clients: [rascasse]                         # Make clients certificate
+
+# Use PAM authentication
+openvpn_use_pam: no
+
+# LDAP authentication and configuration (optional)
+openvpn_use_ldap: yes
+openvpn_ldap_tlsenable: 'no'
+openvpn_ldap_follow_referrals: 'no'
+
+
+# To use LDAP you must configure the following vars with real:
+openvpn_ldap_server: ldap.esihosting.com
+openvpn_ldap_bind_dn: 'cn=admin,dc=esihosting,dc=com'
+openvpn_ldap_bind_password: azerty
+openvpn_ldap_base_dn: 'ou=vpn,ou=Groups,dc=esihosting,dc=com'
+openvpn_ldap_search_filter: '"sAMAccountName=%u"'
+openvpn_ldap_group_search_filter: '"cn=vpn"'
+
+
+# Use simple authentication (default is disabled)
+openvpn_simple_auth: no
+
+# Whether to embed CA, cert, and key info inside client OVPN config file.
+openvpn_unified_client_profiles: yes
+

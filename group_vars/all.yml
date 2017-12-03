@@ -14,5 +14,4 @@ routes_group: {}
 routes_host: {}
 routes_merged: "{{ routes_default | combine(routes_group) | combine(routes_host) }}"
 
-resolv_nameservers:
-  - 192.168.30.2
+rsyslog__forward: [ '*.* @192.168.40.4' ]

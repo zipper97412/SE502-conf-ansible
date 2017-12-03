@@ -1,0 +1,13 @@
+
+
+rsyslog__capabilities: ['network', 'remote-files']
+
+rsyslog__udp_port: '514'
+
+rsyslog__host_allow: ['192.168.0/17']
+
+rsyslog__forward: []
+
+rsyslog__group_forward: []
+
+rsyslog__host_forward: []

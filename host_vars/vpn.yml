@@ -29,6 +29,8 @@ openvpn_simple_auth: yes
 # Whether to embed CA, cert, and key info inside client OVPN config file.
 openvpn_unified_client_profiles: yes
 
+openvpn_use_syslog: yes
+
 
 routes_host:
   100 routage des clients vpn: ip route replace 192.168.0.0/17 via 192.168.0.254 dev eth2 onlink

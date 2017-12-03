@@ -3,22 +3,30 @@
 - hosts: all
   roles:
     - { role: ansible-role-ip-route, tags: routes }
-    - { role: ansible-role-firewall, tags: iptables }
-    - { role: ansible-resolv, tags: resolv }
+    - { role: ansible-rsyslog, tags: rsyslog}
 
 - hosts: vpn
   roles:
     - { role: Stouts.openvpn, tags: openvpn }
 
+- hosts: vpn_intranet
+  roles:
+    #- { role: Stouts.openvpn, tags: openvpn }
+
+- hosts: ldap
+  roles:
+    #- { role: ansible-openldap, tags: ldap }
+
 - hosts: dns_publique
   roles:
     - { role: ansible-role-bind, tags: bind }
 
-- hosts: web_failover:load_bal
+- hosts: web_failover
   roles:
     - { role: ansible-keepalived, tags: keepalived }
+    - { role: ansible-role-nginx, tags: nginx }
 
-- hosts: web_failover
+- hosts: dmz_web
   roles:
     - { role: ansible-role-nginx, tags: nginx }
 
@@ -32,6 +40,9 @@
         state: present
         reload: yes
       tags: forwarding
+  roles:
+    - { role: ansible-keepalived, tags: keepalived }
+    - { role: ansible-role-haproxy, tags: haproxy }
 
 - hosts: fw
   tasks:
@@ -46,7 +57,12 @@
     - name: Install vlan (debian/ubuntu)
       apt: name=vlan state=latest
       tags: vlan
+    - name: set hostname
+      copy: content="{{ inventory_hostname }}" dest=/etc/hostname
+      tags: hostname
   roles:
+    - { role: ansible-resolv, tags: resolv }
     - { role: ansible-role-interfaces, tags: interface }
+    - { role: ansible-role-firewall, tags: iptables }
     - { role: ansible-keepalived, tags: keepalived }
     - { role: ansible-conntrackd, tags: conntrackd }

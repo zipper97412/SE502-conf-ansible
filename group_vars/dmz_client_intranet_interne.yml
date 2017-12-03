@@ -1,0 +1,2 @@
+routes_group:
+  010 default gw: ip route replace 192.168.53.0/24 via 192.168.55.2 dev eth1 onlink
